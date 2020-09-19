@@ -1,0 +1,44 @@
+#include<stdio.h>
+#include<mpi.h>
+void main(int argc,char *argv){
+	int a[1000];     //need for program
+	int rank, size;
+	int i,x,local_sum=0,sum=0,total_sum=0;
+	MPI_Status status;
+
+	MPI_Init(NULL,NULL);
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	
+	x=1000/size;   //each processor's data size
+
+	if(rank==0){   //P0
+		for(i=0;i<1000;i++){
+			a[i]=1;
+		}
+		for(i=1;i<size;i++){
+			MPI_Send(&a[i*x],x,MPI_INT,i,5,MPI_COMM_WORLD);   //send data to other processor
+			MPI_Recv(&sum,1,MPI_INT,i,5,MPI_COMM_WORLD,&status);
+			total_sum+=sum;
+		}
+		for(i=0;i<x;i++){
+			if(a[i]%2!=0){
+				local_sum+=a[i];   //odd case
+			}
+		}
+		total_sum+=local_sum;
+		printf("total_sum = %d\n",total_sum);
+	}	
+	else if(rank!=0){
+		MPI_Recv(a+rank*x,1000,MPI_INT,0,5,MPI_COMM_WORLD,&status);  //receive from P0
+		for(i=0;i<x;i++){
+			if(a[i+rank*x]%2!=0){    //odd case
+				local_sum+=a[i+rank*x];
+			}
+		}
+		MPI_Send(&local_sum,1,MPI_INT,0,5,MPI_COMM_WORLD);  //send local sum to P0
+	}
+	
+	MPI_Finalize();
+
+}

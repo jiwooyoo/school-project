@@ -1,0 +1,92 @@
+//반려동물의 무게를 측정 후 평균 무게를 하루에 한번씩 서버로 전송하는 함수
+void Weight(){
+	measure(currentWeight);
+	store(currentWeight);
+	
+	measure(spend_time);
+	if(spend_time==24hours)
+		transmit(avgWeight to Server);
+	reset spend_time to zero;
+}
+  
+//반려동물의 온도를 측정 및 저장 후 이상수치가 감지되면 서버로 전송하는 함수
+void Temperature(){
+	measure(tmpr);
+	store(tmpr);
+	if(|tmpr-avgTmpr|>1.5)
+		transmit(tmpr to Server);
+}
+
+//하루 평균 체온을 하루에 한번씩 서버로 전송하는 함수
+void DayTemperature(){
+	measure(spend_time);
+	if(spend_time==24hours)
+		transmit(avgTmpr to Server);
+	reset spend_time to zero;
+}
+
+//반려동물의 심박수 측정 및 저장 후 이상수치 감지 시 서버로 보내는 함수
+void HeartBeat(){
+	measure(h_beat);
+	store(h_beat);
+	if(min_beat >= h_beat OR h_beat >= max_beat)
+		transmit(h_beat to Server);
+}
+
+//센서에 저장된 한시간 동안의 온도를 서버로 전송하는 함수
+void hour_Temperature(request from Server){
+	transmit(tmpr per hour to Server);
+}
+
+//센서에 저장된 한시간 동안의 심박수를 서버로 전송하는 함수
+void hour_HeartBeat(request from Server){
+	transmit(h_beat per hour to Server);
+}
+
+//이상수치 감지 시 사용자에게 알려주는 함수
+void SendToUser(EmergencyData from Sensor){
+	transmit(EmergencyData to user);
+}
+
+//서버로부터 응급상황을 연락받았을 때 알람 여부를 설정하는 함수
+void Alarm(userDecision){
+	if(userDecision=="Yes")
+		alarm "on" when Server send EmergencyData;
+}
+
+//사용자가 반려동물의 특수 정보를 입력하는 함수
+void defineInfo(specific Information of pet){
+	transmit(specInfo to Server);
+}
+
+//병원으로 응급상황을 알릴지 결정하는 함수
+void Decision(userDecision whether send data to hospital){
+	if(userDecision=="Yes")
+		trasmit(userDecision to Server);
+}
+
+//센서로부터 받아온 한시간의 수치를 병원에 전송하는 함수
+void SentToHospital(userDecision,Data per hour from Sensor){
+	if(userDecison=="Yes")
+		trasmit(Weight per hour,specInfo to hospital);
+}
+
+//동물의 위치를 측정 및 계산 후 이탈 시 사용자에게 전송하는 함수
+void CalculateLocation(currentLoc from Sensor){
+	radius=200;
+	distance = calculate(distance from home's center point);
+	if(distance>radius){
+		transmit(distance to user);
+	}
+}
+
+//현재 위치 측정 및 저장 후 사용자가 정의한 시간을 주기로 서버에 전송하는 함수
+void LocationToServer(currentLoc from Server){
+	if(time pass 3seconds){
+		measure(currentLoc);
+		store(currentLoc);
+		if(time == userDefinedTime){
+			transmit(currentLoc to Server);
+		}
+	}
+}

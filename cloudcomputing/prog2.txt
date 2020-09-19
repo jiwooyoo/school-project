@@ -1,0 +1,48 @@
+#include<stdio.h>
+#include<mpi.h>
+#define SIZE 40
+void main(int argc,char *argv){
+	int a[SIZE],b[SIZE],local_sum[SIZE];
+	int rank, size;
+	int i,x,low,high;
+	int sum;
+	MPI_Status status;
+
+	MPI_Init(NULL,NULL);    //basic instructions
+	MPI_Comm_size(MPI_COMM_WORLD, &size);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+	
+	x=SIZE/size;   //each processor's data size
+
+	if(rank==0){
+		for(i=0;i<SIZE;i++){
+			a[i]=1;
+		}
+	}
+
+	MPI_Scatter(a+rank*x,x,MPI_INT,b+rank*x,x,MPI_INT,0,MPI_COMM_WORLD);  //scatter the data	
+	low=rank*x;
+	high=low+x;
+	
+	sum=0;
+	for(i=low;i<high;i++){   //calculate in each process
+		b[i]=b[i]+sum;        //prefix sum
+		sum=b[i];
+		a[rank]=sum;
+	}
+	
+	MPI_Allgather(a,x,MPI_INT,local_sum,x,MPI_INT,MPI_COMM_WORLD);
+
+	if(rank!=0){
+		for(i=rank*x;i<rank*x+x;i++){
+			b[i]=local_sum[rank-1]+b[i];   //for final prefix compute
+		}
+		local_sum[rank]=local_sum[rank]+b[rank*x];
+	}
+	
+	if(rank==0) 
+		for(i=0;i<SIZE;i++) printf("b[%d] = %d\n",i,b[i]);
+	
+	MPI_Finalize();
+
+}
